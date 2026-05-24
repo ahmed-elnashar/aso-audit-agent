@@ -1,0 +1,53 @@
+{
+  "name": "aso-audit-agent",
+  "version": "1.0.0",
+  "description": "ASO Audit Agent — paste an Apple App Store URL, get back a prioritized audit. Built on Mastra + Next.js.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "mastra:dev": "mastra dev",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "audit:smoke": "tsx --env-file=.env scripts/smoke-audit.ts",
+    "audit:workflow": "tsx --env-file=.env scripts/smoke-workflow.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.65",
+    "@ai-sdk/react": "^3.0.193",
+    "@mastra/ai-sdk": "^1.4.3",
+    "@mastra/core": "^1.36.0",
+    "@mastra/duckdb": "^1.4.0",
+    "@mastra/evals": "^1.2.2",
+    "@mastra/libsql": "^1.11.1",
+    "@mastra/loggers": "^1.1.1",
+    "@mastra/memory": "^1.19.0",
+    "@mastra/observability": "^1.13.0",
+    "ai": "^6.0.191",
+    "cheerio": "^1.2.0",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
+    "mastra": "^1.10.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
+  }
+}

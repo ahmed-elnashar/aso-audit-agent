@@ -1,0 +1,15 @@
+output.txt
+node_modules
+dist
+.next
+.mastra
+.env.development
+.env
+*.db
+*.db-*
+.netlify
+.vercel
+.lh-reports
+*.tsbuildinfo
+*.duckdb
+.claude/
