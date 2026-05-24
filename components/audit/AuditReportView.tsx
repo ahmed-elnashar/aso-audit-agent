@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ScoreCard } from './ScoreCard';
 import { RecommendationList } from './RecommendationList';
 import { CompetitorTable } from './CompetitorTable';
+import { ReportActions } from './ReportActions';
 import type { AuditReport } from '@/audit/types';
 
 export type { AuditReport };
@@ -25,6 +26,9 @@ export function AuditReportView({ report }: { report: AuditReport }) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-end gap-2">
+        <ReportActions report={report} />
+      </div>
       <ScoreCard report={report} />
 
       <section aria-labelledby="recommendations-heading" className="overflow-hidden rounded-2xl border bg-card">
