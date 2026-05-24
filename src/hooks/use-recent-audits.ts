@@ -15,6 +15,7 @@ type Listener = () => void;
 const listeners = new Set<Listener>();
 
 function notify() {
+  cachedSnapshot = null;
   for (const l of listeners) l();
 }
 
@@ -23,7 +24,10 @@ function subscribe(listener: Listener): () => void {
   // Cross-tab sync: localStorage emits a 'storage' event in other tabs only,
   // so this still helps if the user opens the app in two tabs.
   const onStorage = (e: StorageEvent) => {
-    if (e.key === RECENT_AUDITS_STORAGE_KEY) listener();
+    if (e.key === RECENT_AUDITS_STORAGE_KEY) {
+      cachedSnapshot = null;
+      listener();
+    }
   };
   window.addEventListener('storage', onStorage);
   return () => {
@@ -32,8 +36,17 @@ function subscribe(listener: Listener): () => void {
   };
 }
 
+// `useSyncExternalStore` requires getSnapshot to be referentially stable
+// between calls when the underlying state has not changed — otherwise React
+// detects a "snapshot changed" on every render and loops forever. We cache the
+// list and invalidate the cache on `add`/`clear`/cross-tab storage events.
+let cachedSnapshot: RecentAuditEntry[] | null = null;
+
 function getSnapshot(): RecentAuditEntry[] {
-  return listRecentAudits();
+  if (cachedSnapshot === null) {
+    cachedSnapshot = listRecentAudits();
+  }
+  return cachedSnapshot;
 }
 
 const EMPTY: RecentAuditEntry[] = [];

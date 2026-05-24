@@ -16,12 +16,15 @@ const DIMENSION_LABELS: Record<string, string> = {
 };
 
 export function ScoreCard({ report }: { report: AuditReport }) {
+  // Scope the heading id by appId so multiple ScoreCards on one page
+  // (e.g. the /compare view) each get a distinct aria-labelledby target.
+  const headingId = `aso-score-heading-${report.app.appId}`;
   return (
     <section
-      aria-labelledby="aso-score-heading"
+      aria-labelledby={headingId}
       className="overflow-hidden rounded-2xl border bg-card shadow-sm"
     >
-      <h2 id="aso-score-heading" className="sr-only">
+      <h2 id={headingId} className="sr-only">
         ASO score card for {report.app.name}
       </h2>
       <div className="flex items-center gap-4 border-b px-5 py-4">
