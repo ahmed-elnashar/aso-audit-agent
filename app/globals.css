@@ -60,3 +60,52 @@ button:disabled {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/**
+ * Print styles for "Save as PDF" export. Hides the chat chrome (header,
+ * composer, recent list, error banners, action buttons) so only the audit
+ * report itself prints. Marked with `print:hidden` on components that should
+ * be invisible regardless of where they appear.
+ */
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+  header,
+  footer,
+  nav,
+  form {
+    display: none !important;
+  }
+  main {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  /* Let the report container expand instead of scrolling. */
+  main > div {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  /* Avoid orphaning a dimension card or recommendation across pages. */
+  section,
+  li,
+  article {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  /* Force light card backgrounds so colored borders read on white paper. */
+  .bg-card,
+  .bg-muted,
+  .bg-muted\/40 {
+    background: #fff !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
