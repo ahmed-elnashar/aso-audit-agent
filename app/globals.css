@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: oklch(0.99 0 0);
+  --color-foreground: oklch(0.15 0 0);
+  --color-muted: oklch(0.96 0 0);
+  --color-muted-foreground: oklch(0.45 0 0);
+  --color-border: oklch(0.92 0 0);
+  --color-card: oklch(1 0 0);
+  --color-accent: oklch(0.55 0.18 264);
+  --color-accent-foreground: oklch(1 0 0);
+  --color-good: oklch(0.7 0.17 145);
+  --color-warn: oklch(0.75 0.17 75);
+  --color-bad: oklch(0.62 0.22 25);
+
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Inter", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: oklch(0.13 0.005 264);
+    --color-foreground: oklch(0.95 0 0);
+    --color-muted: oklch(0.18 0.005 264);
+    --color-muted-foreground: oklch(0.65 0 0);
+    --color-border: oklch(0.25 0.005 264);
+    --color-card: oklch(0.16 0.005 264);
+    --color-accent: oklch(0.7 0.16 264);
+    --color-accent-foreground: oklch(0.1 0 0);
+  }
+}
+
+html,
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
