@@ -1,12 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CompareView } from '@/components/audit/CompareView';
 import { getRecentAudit, type RecentAuditEntry } from '@/lib/recent-audits-storage';
 
 export default function ComparePage() {
+  // useSearchParams() must live under a <Suspense> boundary so Next can
+  // statically prerender the outer shell and only hydrate the param-dependent
+  // part on the client.
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <CompareBody />
+    </Suspense>
+  );
+}
+
+function CompareBody() {
   const params = useSearchParams();
   const aId = params.get('a');
   const bId = params.get('b');
