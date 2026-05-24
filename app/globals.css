@@ -62,50 +62,179 @@ button:disabled {
 }
 
 /**
- * Print styles for "Save as PDF" export. Hides the chat chrome (header,
- * composer, recent list, error banners, action buttons) so only the audit
- * report itself prints. Marked with `print:hidden` on components that should
- * be invisible regardless of where they appear.
+ * Polished scrollbars that match the theme. Firefox uses the `scrollbar-*`
+ * properties; WebKit (Chrome, Safari) uses the pseudo-elements below. We
+ * style every scrollable element so we don't have to remember to opt in.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/**
+ * Print styles for "Save as PDF" export. The strategy: hide everything on the
+ * page, then surface only the element marked `[data-print-root]` (the audit
+ * report). Position it absolutely so the chat's flex/scroll layout doesn't
+ * leave blank pages above it.
  */
 @media print {
+  @page {
+    size: letter;
+    margin: 0.55in 0.55in 0.6in;
+  }
+
+  /* Force light-theme color tokens regardless of OS dark mode. Browsers
+     usually do this for print but we don't want to depend on it — and our
+     own dark-mode @theme overrides would otherwise leak into the PDF. */
+  :root {
+    --color-background: #ffffff !important;
+    --color-foreground: #111111 !important;
+    --color-muted: #f5f5f5 !important;
+    --color-muted-foreground: #555555 !important;
+    --color-border: #d4d4d4 !important;
+    --color-card: #ffffff !important;
+    --color-accent: #1d4ed8 !important;
+    --color-accent-foreground: #ffffff !important;
+    --color-good: #15803d !important;
+    --color-warn: #b45309 !important;
+    --color-bad: #b91c1c !important;
+  }
+
   html,
   body {
-    background: #fff;
-    color: #000;
+    background: #fff !important;
+    color: #111 !important;
+    height: auto !important;
+    overflow: visible !important;
+    font-size: 10pt;
+    line-height: 1.45;
   }
-  header,
-  footer,
-  nav,
-  form {
+
+  /* Hide the entire page; the print root opts back in below. */
+  body * {
+    visibility: hidden !important;
+  }
+  [data-print-root],
+  [data-print-root] * {
+    visibility: visible !important;
+  }
+  [data-print-root] {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Anything tagged `print:hidden` (action bar, etc.) is dropped from layout. */
+  [data-print-root] .print\:hidden,
+  .print\:hidden {
     display: none !important;
   }
-  main {
-    height: auto !important;
+
+  /* Neutralize every scroll constraint anywhere on the page. */
+  *,
+  *::before,
+  *::after {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
     max-height: none !important;
-    overflow: visible !important;
-    max-width: 100% !important;
-    padding: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
-  /* Let the report container expand instead of scrolling. */
-  main > div {
-    overflow: visible !important;
-    height: auto !important;
+
+  /* Hide scrollbars completely in the printed view. */
+  * {
+    scrollbar-width: none !important;
   }
-  /* Avoid orphaning a dimension card or recommendation across pages. */
-  section,
-  li,
-  article {
-    page-break-inside: avoid;
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* No truncation in print — wrap instead. */
+  [data-print-root] .truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  /* Force long unbreakable strings (URLs, evidence sentences) to wrap. */
+  [data-print-root] p,
+  [data-print-root] span,
+  [data-print-root] code,
+  [data-print-root] pre,
+  [data-print-root] .font-mono {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* Page-break safety. */
+  [data-print-root] section,
+  [data-print-root] article,
+  [data-print-root] li,
+  [data-print-root] table {
     break-inside: avoid;
+    page-break-inside: avoid;
   }
-  /* Force light card backgrounds so colored borders read on white paper. */
-  .bg-card,
-  .bg-muted,
-  .bg-muted\/40 {
+  [data-print-root] h1,
+  [data-print-root] h2,
+  [data-print-root] h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Ink-friendly surfaces: white backgrounds, subtle borders. */
+  [data-print-root] .bg-card,
+  [data-print-root] .bg-muted,
+  [data-print-root] .bg-muted\/40,
+  [data-print-root] .bg-muted\/30,
+  [data-print-root] .bg-muted\/50,
+  [data-print-root] .bg-foreground\/5 {
     background: #fff !important;
   }
-  a {
-    color: inherit;
-    text-decoration: underline;
+  [data-print-root] .border,
+  [data-print-root] .border-t,
+  [data-print-root] .border-b {
+    border-color: #d4d4d4 !important;
+  }
+
+  /* Tighter radii: cards look more like a document, less like a UI screenshot. */
+  [data-print-root] .rounded-2xl,
+  [data-print-root] .rounded-xl,
+  [data-print-root] .rounded-lg,
+  [data-print-root] .rounded-md {
+    border-radius: 4px !important;
+  }
+
+  /* Links: black + underline (browser default would print blue). */
+  [data-print-root] a {
+    color: inherit !important;
+    text-decoration: underline !important;
   }
 }
