@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AuditReportView, type AuditReport } from './AuditReportView';
+import { useRecentAudits } from '@/hooks/use-recent-audits';
 
 interface Candidate {
   name: string;
@@ -16,47 +17,84 @@ interface AppConfirmationCardProps {
   candidate: Candidate;
 }
 
+type Stage =
+  | 'fetching-listing-data'
+  | 'fetching-competitors'
+  | 'deterministic'
+  | 'qualitative-start'
+  | 'qualitative-done'
+  | 'qualitative-skipped'
+  | 'aggregating';
+
 type State =
   | { kind: 'idle' }
-  | { kind: 'running' }
+  | { kind: 'running'; stage: Stage }
   | { kind: 'done'; report: AuditReport }
   | { kind: 'cancelled' }
   | { kind: 'error'; message: string };
 
-const PROGRESS_LABELS = [
-  'Fetching reviews and screenshots…',
-  'Pulling top apps in this category…',
-  'Scoring 10 ASO dimensions…',
-  'Asking the model for qualitative judgement…',
-  'Assembling the report…',
+/**
+ * Visible-to-user label for each backend stage. Stages that complete in
+ * milliseconds (qualitative-done) reuse their predecessor's label so the UI
+ * doesn't flash.
+ */
+const STAGE_LABELS: Record<Stage, string> = {
+  'fetching-listing-data': 'Fetching the listing, reviews, and top apps in this category…',
+  'fetching-competitors': 'Looking up competitor metadata…',
+  deterministic: 'Scoring 10 ASO dimensions…',
+  'qualitative-start': 'Asking the model for qualitative judgement…',
+  'qualitative-done': 'Assembling the report…',
+  'qualitative-skipped': 'Assembling the report (qualitative pass skipped)…',
+  aggregating: 'Assembling the report…',
+};
+
+const STAGE_ORDER: Stage[] = [
+  'fetching-listing-data',
+  'fetching-competitors',
+  'deterministic',
+  'qualitative-start',
+  'aggregating',
 ];
 
 export function AppConfirmationCard({ runId, candidate }: AppConfirmationCardProps) {
   const [state, setState] = useState<State>({ kind: 'idle' });
+  const { add } = useRecentAudits();
+  const savedRunIdRef = useRef<string | null>(null);
+
+  // Persist a completed audit to localStorage exactly once per runId, even
+  // across re-renders / dev-mode double-effects.
+  useEffect(() => {
+    if (state.kind === 'done' && savedRunIdRef.current !== runId) {
+      savedRunIdRef.current = runId;
+      add(state.report);
+    }
+  }, [state, add, runId]);
 
   const respond = async (approved: boolean) => {
-    setState({ kind: 'running' });
+    setState({ kind: 'running', stage: 'fetching-listing-data' });
     try {
       const res = await fetch('/api/audit/resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ runId, approved }),
       });
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
         const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
         setState({ kind: 'error', message: body.error ?? `HTTP ${res.status}` });
         return;
       }
-      const out = (await res.json()) as { status: 'completed' | 'cancelled'; report: AuditReport | null };
-      if (out.status === 'cancelled') {
-        setState({ kind: 'cancelled' });
-        return;
-      }
-      if (out.status !== 'completed' || !out.report) {
-        setState({ kind: 'error', message: 'Audit did not complete.' });
-        return;
-      }
-      setState({ kind: 'done', report: out.report });
+
+      await readEventStream(res.body, (event) => {
+        if (event.type === 'progress') {
+          setState({ kind: 'running', stage: event.stage });
+        } else if (event.type === 'completed') {
+          setState({ kind: 'done', report: event.report });
+        } else if (event.type === 'cancelled') {
+          setState({ kind: 'cancelled' });
+        } else if (event.type === 'error') {
+          setState({ kind: 'error', message: event.message });
+        }
+      });
     } catch (err) {
       setState({ kind: 'error', message: err instanceof Error ? err.message : 'unknown error' });
     }
@@ -84,7 +122,7 @@ export function AppConfirmationCard({ runId, candidate }: AppConfirmationCardPro
   }
 
   if (state.kind === 'running') {
-    return <RunningProgress />;
+    return <RunningProgress stage={state.stage} />;
   }
 
   return (
@@ -132,32 +170,71 @@ export function AppConfirmationCard({ runId, candidate }: AppConfirmationCardPro
   );
 }
 
-function RunningProgress() {
-  const [idx, setIdx] = useState(0);
-  if (typeof window !== 'undefined') {
-    setTimeout(() => setIdx((i) => Math.min(i + 1, PROGRESS_LABELS.length - 1)), 2500);
-  }
+function RunningProgress({ stage }: { stage: Stage }) {
+  const orderIdx = STAGE_ORDER.indexOf(progressBarStage(stage));
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card px-4 py-4">
+    <div className="overflow-hidden rounded-2xl border bg-card px-4 py-4" role="status" aria-live="polite">
       <div className="flex items-center gap-3">
         <Spinner />
         <div className="flex-1">
-          <div className="text-xs font-medium">Auditing — this takes about 10-15 seconds.</div>
+          <div className="text-xs font-medium">Auditing — usually 10–20 seconds.</div>
           <div className="mt-0.5 text-[11px] text-muted-foreground transition-all">
-            {PROGRESS_LABELS[idx]}
+            {STAGE_LABELS[stage]}
           </div>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
-        {PROGRESS_LABELS.map((_, i) => (
+        {STAGE_ORDER.map((_, i) => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full ${i <= idx ? 'bg-accent' : 'bg-muted'}`}
+            className={`h-1 flex-1 rounded-full transition-colors ${i <= orderIdx ? 'bg-accent' : 'bg-muted'}`}
           />
         ))}
       </div>
     </div>
   );
+}
+
+/**
+ * Some stages (qualitative-done, qualitative-skipped) are not bar positions —
+ * they roll into the next visible step. Map them onto the bar's anchor stage.
+ */
+function progressBarStage(stage: Stage): Stage {
+  if (stage === 'qualitative-done' || stage === 'qualitative-skipped') return 'aggregating';
+  return stage;
+}
+
+async function readEventStream(
+  body: ReadableStream<Uint8Array>,
+  onEvent: (event: { type: 'progress'; stage: Stage; detail?: string } | { type: 'completed'; report: AuditReport } | { type: 'cancelled' } | { type: 'error'; message: string }) => void
+) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  // SSE frames are separated by blank lines. Each frame can have one or more
+  // `data:` lines; we concatenate them and JSON.parse the payload.
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let separatorIdx;
+    while ((separatorIdx = buffer.indexOf('\n\n')) !== -1) {
+      const frame = buffer.slice(0, separatorIdx);
+      buffer = buffer.slice(separatorIdx + 2);
+      const dataLines = frame
+        .split('\n')
+        .filter((l) => l.startsWith('data:'))
+        .map((l) => l.slice(5).trimStart());
+      if (dataLines.length === 0) continue;
+      try {
+        onEvent(JSON.parse(dataLines.join('\n')));
+      } catch {
+        // Ignore malformed frames — the stream may still deliver valid ones.
+      }
+    }
+  }
 }
 
 function Spinner() {

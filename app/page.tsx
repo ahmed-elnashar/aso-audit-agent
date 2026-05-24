@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { useRef, useState } from 'react';
 import { ChatMessage } from '@/components/chat/Message';
 import { Composer } from '@/components/chat/Composer';
+import { RecentAuditsList } from '@/components/audit/RecentAuditsList';
 
 export default function Page() {
   const { messages, sendMessage, setMessages, status, error } = useChat();
@@ -56,7 +57,10 @@ export default function Page() {
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6">
         {!hasMessages ? (
-          <EmptyState onPick={(url) => sendMessage({ text: url })} />
+          <>
+            <EmptyState onPick={(url) => sendMessage({ text: url })} />
+            <RecentAuditsList />
+          </>
         ) : (
           <div className="space-y-6">
             {messages.map((m) => (

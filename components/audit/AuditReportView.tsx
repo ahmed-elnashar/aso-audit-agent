@@ -4,59 +4,9 @@ import { useState } from 'react';
 import { ScoreCard } from './ScoreCard';
 import { RecommendationList } from './RecommendationList';
 import { CompetitorTable } from './CompetitorTable';
+import type { AuditReport } from '@/audit/types';
 
-interface AppSummary {
-  appId: string;
-  name: string;
-  developer: string;
-  category: string;
-  country: string;
-  iconUrl: string | null;
-  appStoreUrl: string;
-  version: string | null;
-  currentVersionReleaseDate: string | null;
-}
-
-interface DimensionResult {
-  dimension: string;
-  weight: number;
-  score: number | null;
-  evidence: string[];
-  status: 'assessed' | 'unavailable';
-  unavailableReason?: string;
-  recommendations: Recommendation[];
-}
-
-interface Recommendation {
-  dimension: string;
-  category: 'quick-win' | 'high-impact' | 'strategic';
-  evidence: string;
-  before: string | null;
-  after: string | null;
-  reasoning: string;
-}
-
-interface CompetitorSummary {
-  appId: string;
-  name: string;
-  developer: string;
-  rank: number;
-  averageRating: number | null;
-  ratingCount: number | null;
-  subtitle: string | null;
-  iconUrl: string | null;
-}
-
-export interface AuditReport {
-  app: AppSummary;
-  overallScore: number;
-  dimensions: DimensionResult[];
-  competitors: CompetitorSummary[];
-  quickWins: Recommendation[];
-  highImpact: Recommendation[];
-  strategic: Recommendation[];
-  generatedAt: string;
-}
+export type { AuditReport };
 
 type Tab = 'quick-win' | 'high-impact' | 'strategic';
 

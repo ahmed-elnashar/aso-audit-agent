@@ -8,6 +8,7 @@ import { scrapeListing } from '../../lib/scrape/listing';
 import { buildAuditAppInput, buildAuditCompetitorInput } from '../../audit/inputs';
 import { runAudit } from '../../audit/run';
 import { RecommendationSchema, type AuditReport } from '../../audit/types';
+import { emitProgress } from '../progress-emitter';
 
 const AppCandidateSchema = z.object({
   appId: z.string(),
@@ -102,7 +103,7 @@ const confirmAndAudit = createStep({
     report: AuditReportSchema.nullable(),
     cancelledFor: AppCandidateSchema.nullable(),
   }),
-  execute: async ({ inputData, resumeData, suspend }) => {
+  execute: async ({ inputData, resumeData, suspend, runId }) => {
     if (!resumeData) {
       await suspend({ candidate: inputData });
       return { status: 'cancelled' as const, report: null, cancelledFor: inputData };
@@ -114,6 +115,7 @@ const confirmAndAudit = createStep({
     const { appId, country, slug } = inputData;
     const lookup = await lookupApp({ appId, country });
 
+    emitProgress(runId, { stage: 'fetching-listing-data' });
     const [scraped, reviews, topCharts] = await Promise.all([
       scrapeListing({ appId, country, slug }),
       fetchReviews({ appId, country, pages: 1 }),
@@ -124,6 +126,7 @@ const confirmAndAudit = createStep({
       .filter((c) => c.appId !== appId)
       .slice(0, 3)
       .map((c) => c.appId);
+    emitProgress(runId, { stage: 'fetching-competitors', detail: `${competitorIds.length} apps` });
     const competitorLookups = competitorIds.length
       ? await lookupApps({ appIds: competitorIds, country })
       : [];
@@ -136,7 +139,9 @@ const confirmAndAudit = createStep({
       competitors,
     };
 
-    const report = (await runAudit(auditInput)) satisfies AuditReport;
+    const report = (await runAudit(auditInput, {
+      onProgress: (e) => emitProgress(runId, { stage: e.stage }),
+    })) satisfies AuditReport;
 
     return { status: 'completed' as const, report, cancelledFor: null };
   },

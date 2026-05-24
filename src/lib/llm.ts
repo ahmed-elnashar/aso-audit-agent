@@ -7,20 +7,29 @@ const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
 export interface LlmConfig {
   modelId: string;
   provider: 'nvidia-nim' | 'openai';
+  supportsVision: boolean;
+}
+
+export interface ResolvedAuditModel {
+  model: ReturnType<ReturnType<typeof createOpenAI>>;
+  config: LlmConfig;
 }
 
 /**
  * Returns a configured AI SDK language model and a label describing where it
- * came from. NVIDIA NIM is the default because the brief offers it as a free
- * tier; OPENAI_API_KEY overrides if set so reviewers can swap with zero code
- * changes.
+ * came from. OpenAI is the default; NVIDIA_API_KEY is honored as a fallback.
+ * `supportsVision` is true only for known multimodal OpenAI models — the
+ * qualitative audit reads it to decide whether to send screenshot/icon images.
  */
-export function getAuditModel() {
+export function getAuditModel(): ResolvedAuditModel {
   const openaiKey = process.env.OPENAI_API_KEY;
   if (openaiKey) {
     const provider = createOpenAI({ apiKey: openaiKey });
     const modelId = process.env.ASO_AUDIT_MODEL ?? DEFAULT_OPENAI_MODEL;
-    return { model: provider(modelId), config: { modelId, provider: 'openai' as const } };
+    return {
+      model: provider(modelId),
+      config: { modelId, provider: 'openai', supportsVision: openaiModelSupportsVision(modelId) },
+    };
   }
 
   const nimKey = process.env.NVIDIA_API_KEY;
@@ -29,7 +38,28 @@ export function getAuditModel() {
   }
   const provider = createOpenAI({ apiKey: nimKey, baseURL: NIM_BASE_URL });
   const modelId = process.env.ASO_AUDIT_MODEL ?? DEFAULT_NIM_MODEL;
-  return { model: provider(modelId), config: { modelId, provider: 'nvidia-nim' as const } };
+  // NIM hosts both text-only and vision-capable models; we don't try to enumerate
+  // them. Reviewers who want vision should use an OpenAI key.
+  return {
+    model: provider(modelId),
+    config: { modelId, provider: 'nvidia-nim', supportsVision: false },
+  };
+}
+
+/**
+ * Vision-capable OpenAI models as of writing. Conservative on purpose — false
+ * negatives just downgrade to text-only, false positives waste an API call.
+ */
+export function openaiModelSupportsVision(modelId: string): boolean {
+  const id = modelId.toLowerCase();
+  return (
+    id.startsWith('gpt-4o') ||
+    id.startsWith('gpt-4.1') ||
+    id.startsWith('gpt-5') ||
+    id.startsWith('o1') ||
+    id.startsWith('o3') ||
+    id.startsWith('chatgpt-4o')
+  );
 }
 
 export function hasLlmKey(): boolean {
@@ -39,7 +69,7 @@ export function hasLlmKey(): boolean {
 export class MissingLlmKeyError extends Error {
   constructor() {
     super(
-      'No LLM API key configured. Set NVIDIA_API_KEY (recommended — free tier at build.nvidia.com) or OPENAI_API_KEY.'
+      'No LLM API key configured. Set OPENAI_API_KEY (recommended) or NVIDIA_API_KEY (free tier at build.nvidia.com).'
     );
     this.name = 'MissingLlmKeyError';
   }

@@ -1,24 +1,22 @@
 import { z } from 'zod';
-import { generateObject } from 'ai';
+import { generateObject, type ImagePart, type TextPart, type UserModelMessage } from 'ai';
 import { getAuditModel } from '../lib/llm';
 import { loadAsoAuditRubric } from '../mastra/skills';
 import type { AuditInput } from './inputs';
 import { RecommendationSchema, type DimensionResult, type Recommendation } from './types';
 
+const QualitativeScoreSchema = z
+  .object({
+    score: z.number().min(0).max(10).nullable(),
+    reasoning: z.string(),
+  })
+  .nullable();
+
 const QualitativeOutputSchema = z.object({
   qualitativeScores: z.object({
-    icon: z
-      .object({
-        score: z.number().min(0).max(10).nullable(),
-        reasoning: z.string(),
-      })
-      .nullable(),
-    previewVideo: z
-      .object({
-        score: z.number().min(0).max(10).nullable(),
-        reasoning: z.string(),
-      })
-      .nullable(),
+    icon: QualitativeScoreSchema,
+    screenshots: QualitativeScoreSchema,
+    previewVideo: QualitativeScoreSchema,
   }),
   reviewThemes: z
     .object({
@@ -31,7 +29,18 @@ const QualitativeOutputSchema = z.object({
 
 export type QualitativeOutput = z.infer<typeof QualitativeOutputSchema>;
 
-function buildSystemPrompt(): string {
+const VISION_SKIPPED_REASON = 'vision skipped: model does not support image input';
+
+const SCREENSHOTS_SENT_TO_VISION = 3;
+
+function buildSystemPrompt(supportsVision: boolean): string {
+  const visionClause = supportsVision
+    ? `1. Score the three visual dimensions (\`icon\`, \`screenshots\`, \`previewVideo\`) using the
+   images attached to the user message and the surrounding metadata. If you genuinely cannot assess
+   one (e.g. no preview video URL exists), set its score to \`null\` and explain why in the reasoning.`
+    : `1. Score \`icon\`, \`screenshots\`, and \`previewVideo\` to \`null\` — this model is text-only and
+   was not given the images. Set the reasoning for each to: "${VISION_SKIPPED_REASON}".`;
+
   return `${loadAsoAuditRubric()}
 
 ---
@@ -40,9 +49,7 @@ You are running the qualitative pass of the rubric above. Deterministic
 findings (char counts, presence checks, token overlap, ratings averages) have
 already been computed and will be provided in the user message. Your job is:
 
-1. Score the two visual dimensions (\`icon\`, \`previewVideo\`) using the URLs
-   and surrounding metadata you have. If you cannot reasonably assess one
-   from URLs/metadata alone, set its score to \`null\` and say so in the reasoning.
+${visionClause}
 2. Extract praise and complaint themes from the review sample, if any reviews
    were provided. If the review array is empty, set \`reviewThemes\` to null.
 3. Propose up to 8 ADDITIONAL recommendations beyond what the deterministic
@@ -56,19 +63,45 @@ export async function runQualitativeAudit(
   input: AuditInput,
   deterministic: DimensionResult[]
 ): Promise<QualitativeOutput> {
-  const { model } = getAuditModel();
-  const userPrompt = buildPrompt(input, deterministic);
+  const { model, config } = getAuditModel();
+  const messages = buildMessages(input, deterministic, config.supportsVision);
   const { object } = await generateObject({
     model,
     schema: QualitativeOutputSchema,
-    system: buildSystemPrompt(),
-    prompt: userPrompt,
+    system: buildSystemPrompt(config.supportsVision),
+    messages,
     temperature: 0.3,
   });
   return object;
 }
 
-function buildPrompt(input: AuditInput, deterministic: DimensionResult[]): string {
+/**
+ * Builds the user message. When the model supports vision, the icon and the
+ * first N screenshots are attached as image parts so the model can actually see
+ * them; otherwise we send text-only and the system prompt instructs the model
+ * to leave visual scores null.
+ */
+export function buildMessages(
+  input: AuditInput,
+  deterministic: DimensionResult[],
+  supportsVision: boolean
+): UserModelMessage[] {
+  const textPart: TextPart = { type: 'text', text: buildPromptText(input, deterministic) };
+  const content: Array<TextPart | ImagePart> = [textPart];
+
+  if (supportsVision) {
+    if (input.app.iconUrl) {
+      content.push({ type: 'image', image: input.app.iconUrl });
+    }
+    for (const url of input.app.screenshotUrls.slice(0, SCREENSHOTS_SENT_TO_VISION)) {
+      content.push({ type: 'image', image: url });
+    }
+  }
+
+  return [{ role: 'user', content }];
+}
+
+function buildPromptText(input: AuditInput, deterministic: DimensionResult[]): string {
   const app = input.app;
   const compactDeterministic = deterministic
     .map((d) => `  - ${d.dimension} (${d.score === null ? 'N/A' : `${d.score}/10`}): ${d.evidence.join(' ')}`)
@@ -120,26 +153,35 @@ export function mergeQualitative(
   qualitative: QualitativeOutput
 ): DimensionResult[] {
   return deterministic.map((d) => {
-    if (d.dimension === 'icon' && qualitative.qualitativeScores.icon) {
-      const q = qualitative.qualitativeScores.icon;
-      return {
-        ...d,
-        score: q.score ?? d.score,
-        status: q.score === null ? 'unavailable' : 'assessed',
-        evidence: [...d.evidence, `LLM qualitative: ${q.reasoning}`],
-      } satisfies DimensionResult;
+    if (d.dimension === 'icon') {
+      return applyQualitative(d, qualitative.qualitativeScores.icon);
     }
-    if (d.dimension === 'previewVideo' && qualitative.qualitativeScores.previewVideo) {
-      const q = qualitative.qualitativeScores.previewVideo;
-      return {
-        ...d,
-        score: q.score ?? d.score,
-        status: q.score === null ? 'unavailable' : 'assessed',
-        evidence: [...d.evidence, `LLM qualitative: ${q.reasoning}`],
-      } satisfies DimensionResult;
+    if (d.dimension === 'screenshots') {
+      return applyQualitative(d, qualitative.qualitativeScores.screenshots);
+    }
+    if (d.dimension === 'previewVideo') {
+      return applyQualitative(d, qualitative.qualitativeScores.previewVideo);
     }
     return d;
   });
+}
+
+function applyQualitative(
+  d: DimensionResult,
+  q: { score: number | null; reasoning: string } | null
+): DimensionResult {
+  if (!q) return d;
+  // Vision was skipped: don't replace a usable deterministic score with null,
+  // and tag the evidence so the UI is honest about why visual judgment is absent.
+  if (q.reasoning === VISION_SKIPPED_REASON) {
+    return { ...d, evidence: [...d.evidence, `LLM qualitative: ${q.reasoning}`] };
+  }
+  return {
+    ...d,
+    score: q.score ?? d.score,
+    status: q.score === null ? 'unavailable' : 'assessed',
+    evidence: [...d.evidence, `LLM qualitative: ${q.reasoning}`],
+  };
 }
 
 export function attachAdditionalRecommendations(
