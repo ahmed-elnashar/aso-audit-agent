@@ -12,7 +12,6 @@
     "build": "next build",
     "start": "next start",
     "mastra:dev": "mastra dev",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
