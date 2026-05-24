@@ -17,7 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:smoke": "tsx --env-file=.env scripts/smoke-audit.ts",
-    "audit:workflow": "tsx --env-file=.env scripts/smoke-workflow.ts"
+    "audit:workflow": "tsx --env-file=.env scripts/smoke-workflow.ts",
+    "eval:audit": "tsx --env-file=.env scripts/eval-audit.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.65",
