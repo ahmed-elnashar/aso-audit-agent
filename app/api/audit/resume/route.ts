@@ -3,6 +3,8 @@ import { mastra } from '../../../../src/mastra';
 import { asoAuditWorkflow } from '../../../../src/mastra/workflows/aso-audit-workflow';
 import { subscribeProgress, type ProgressEvent } from '../../../../src/mastra/progress-emitter';
 
+export const maxDuration = 60;
+
 // Touch mastra so storage/workflows are attached before we resume the run.
 void mastra;
 

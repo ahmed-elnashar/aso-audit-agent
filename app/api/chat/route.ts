@@ -2,6 +2,8 @@ import { handleChatStream } from '@mastra/ai-sdk';
 import { createUIMessageStreamResponse, type UIMessageChunk } from 'ai';
 import { mastra } from '../../../src/mastra';
 
+export const maxDuration = 60;
+
 const THREAD_ID = 'default-thread';
 const RESOURCE_ID = 'aso-audit';
 

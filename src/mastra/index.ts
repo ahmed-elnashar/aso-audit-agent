@@ -1,7 +1,6 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { DuckDBStore } from '@mastra/duckdb';
 import { MastraCompositeStore } from '@mastra/core/storage';
 import {
   Observability,
@@ -26,6 +25,15 @@ function buildPrimaryStore() {
       authToken: process.env.TURSO_AUTH_TOKEN,
     });
   }
+  // Vercel's filesystem is read-only outside /tmp, and workflow suspend/resume
+  // crosses invocations — neither a read-only fs nor per-instance /tmp can hold
+  // that state. Fail fast with a readable message instead of an opaque LibSQL
+  // write error deep in the workflow runner.
+  if (process.env.VERCEL) {
+    throw new Error(
+      'TURSO_DATABASE_URL is required on Vercel. Set TURSO_DATABASE_URL (and TURSO_AUTH_TOKEN) in the project env — local SQLite cannot persist workflow state across the suspend/resume boundary on serverless.'
+    );
+  }
   return new LibSQLStore({
     id: 'mastra-storage',
     url: 'file:./mastra.db',
@@ -33,18 +41,21 @@ function buildPrimaryStore() {
 }
 
 /**
- * DuckDB has native bindings that don't bundle on Vercel's Node runtime. It's
- * also pure dev ergonomics — observability traces are only useful when you're
- * looking at them in the Mastra Playground, which isn't deployed. So on Vercel
- * (or anywhere `DISABLE_OBSERVABILITY_STORE=1`) we fall back to the primary
- * store for observability traces too.
+ * DuckDB has native bindings (`libduckdb.so`) that aren't shipped to Vercel's
+ * Node runtime. A static import would force module resolution even on the code
+ * paths that don't use it, so we dynamic-import inside the non-Vercel branch
+ * to keep DuckDB completely out of the production bundle's runtime graph.
+ * Observability traces are pure dev ergonomics — only useful in the Mastra
+ * Playground, which isn't deployed.
  */
 async function buildCompositeStore() {
   const primary = buildPrimaryStore();
-  const onVercel = Boolean(process.env.VERCEL) || process.env.DISABLE_OBSERVABILITY_STORE === '1';
-  if (onVercel) {
+  const skipObservabilityStore =
+    Boolean(process.env.VERCEL) || process.env.DISABLE_OBSERVABILITY_STORE === '1';
+  if (skipObservabilityStore) {
     return new MastraCompositeStore({ id: 'composite-storage', default: primary });
   }
+  const { DuckDBStore } = await import('@mastra/duckdb');
   return new MastraCompositeStore({
     id: 'composite-storage',
     default: primary,
