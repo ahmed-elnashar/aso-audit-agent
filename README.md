@@ -1,5 +1,8 @@
 # ASO Audit Agent
 
+> **▶ Live demo:** <https://aso-audit-agent-ten.vercel.app/>
+> **🎥 Walkthrough video:** <https://www.loom.com/share/40007006b5584297add961367cd842a9>
+
 Paste an Apple App Store URL into a chat, confirm the right app, and the agent runs a 10-dimension ASO audit — pulling iTunes metadata, scraping subtitle/promotional fields, comparing against top-charts competitors, scoring everything with deterministic checks plus one vision-aware LLM pass, and returning a tabbed scorecard with before/after rewrites. Built on Mastra (agents, tools, workflows, skills) + Next.js with a custom-designed score card.
 
 ```
