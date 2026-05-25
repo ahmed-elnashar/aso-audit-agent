@@ -2,11 +2,8 @@ import type { ItunesLookupResult } from '../lib/itunes/types';
 import type { Review } from '../lib/itunes/reviews';
 import type { ScrapedListing } from '../lib/scrape/listing';
 
-/**
- * Everything an audit dimension needs to know about the target app — the
- * stable, normalized view that pure scoring functions consume. Anything not
- * available is null; functions decide what to do with missing data.
- */
+/** Normalized view over iTunes Lookup + Reviews + scraped listing. Anything
+ *  the upstream sources don't provide is `null`. */
 export interface AuditAppInput {
   appId: string;
   country: string;

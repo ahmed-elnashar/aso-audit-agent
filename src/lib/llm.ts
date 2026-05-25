@@ -10,18 +10,9 @@ export interface LlmConfig {
   supportsVision: boolean;
 }
 
-export interface ResolvedAuditModel {
-  model: ReturnType<ReturnType<typeof createOpenAI>>;
-  config: LlmConfig;
-}
-
-/**
- * Returns a configured AI SDK language model and a label describing where it
- * came from. OpenAI is the default; NVIDIA_API_KEY is honored as a fallback.
- * `supportsVision` is true only for known multimodal OpenAI models — the
- * qualitative audit reads it to decide whether to send screenshot/icon images.
- */
-export function getAuditModel(): ResolvedAuditModel {
+/** `supportsVision` is true only for known multimodal OpenAI models — the
+ *  qualitative audit reads it to decide whether to attach screenshot images. */
+export function getAuditModel() {
   const openaiKey = process.env.OPENAI_API_KEY;
   if (openaiKey) {
     const provider = createOpenAI({ apiKey: openaiKey });

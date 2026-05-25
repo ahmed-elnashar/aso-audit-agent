@@ -29,11 +29,19 @@ export function parseAppStoreUrl(input: string): ParsedAppUrl {
   }
 
   const segments = url.pathname.split('/').filter(Boolean);
-  const idSegment = segments.find((s) => ID_PATTERN.test(s));
-  if (!idSegment) {
+  let appId: string | undefined;
+  let idSegment: string | undefined;
+  for (const s of segments) {
+    const m = s.match(ID_PATTERN);
+    if (m) {
+      appId = m[1];
+      idSegment = s;
+      break;
+    }
+  }
+  if (!appId || !idSegment) {
     throw new InvalidAppStoreUrlError(input, 'missing app id segment (id12345)');
   }
-  const appId = idSegment.match(ID_PATTERN)![1];
 
   const appIdx = segments.indexOf('app');
   const country = segments[0] && COUNTRY_PATTERN.test(segments[0]) ? segments[0] : DEFAULT_COUNTRY;

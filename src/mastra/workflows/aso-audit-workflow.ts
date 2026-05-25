@@ -7,7 +7,7 @@ import { fetchTopCharts } from '../../lib/itunes/top-charts';
 import { scrapeListing } from '../../lib/scrape/listing';
 import { buildAuditAppInput, buildAuditCompetitorInput } from '../../audit/inputs';
 import { runAudit } from '../../audit/run';
-import { RecommendationSchema, type AuditReport } from '../../audit/types';
+import { RecommendationSchema } from '../../audit/types';
 import { emitProgress } from '../progress-emitter';
 
 const AppCandidateSchema = z.object({
@@ -139,9 +139,9 @@ const confirmAndAudit = createStep({
       competitors,
     };
 
-    const report = (await runAudit(auditInput, {
+    const report = await runAudit(auditInput, {
       onProgress: (e) => emitProgress(runId, { stage: e.stage }),
-    })) satisfies AuditReport;
+    });
 
     return { status: 'completed' as const, report, cancelledFor: null };
   },

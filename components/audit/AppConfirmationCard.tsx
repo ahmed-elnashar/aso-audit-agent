@@ -172,7 +172,10 @@ export function AppConfirmationCard({ runId, candidate }: AppConfirmationCardPro
 }
 
 function RunningProgress({ stage }: { stage: Stage }) {
-  const orderIdx = STAGE_ORDER.indexOf(progressBarStage(stage));
+  // qualitative-done / qualitative-skipped don't have their own bar position —
+  // they roll into the final 'aggregating' segment.
+  const barStage: Stage = stage === 'qualitative-done' || stage === 'qualitative-skipped' ? 'aggregating' : stage;
+  const orderIdx = STAGE_ORDER.indexOf(barStage);
   return (
     <div className="overflow-hidden rounded-2xl border bg-card px-4 py-4" role="status" aria-live="polite">
       <div className="flex items-center gap-3">
@@ -194,15 +197,6 @@ function RunningProgress({ stage }: { stage: Stage }) {
       </div>
     </div>
   );
-}
-
-/**
- * Some stages (qualitative-done, qualitative-skipped) are not bar positions —
- * they roll into the next visible step. Map them onto the bar's anchor stage.
- */
-function progressBarStage(stage: Stage): Stage {
-  if (stage === 'qualitative-done' || stage === 'qualitative-skipped') return 'aggregating';
-  return stage;
 }
 
 async function readEventStream(

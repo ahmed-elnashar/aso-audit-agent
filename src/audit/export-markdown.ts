@@ -12,12 +12,9 @@ const CATEGORY_LABELS: Record<Recommendation['category'], string> = {
   strategic: 'Strategic',
 };
 
-/**
- * Serializes an audit report to a portable Markdown document. Stable output
- * (deterministic ordering, no timestamps in body apart from `generatedAt`) so
- * the same report always produces the same markdown — useful for snapshots,
- * diffing, and copy-paste into Slack/Linear.
- */
+/** Stable output: identical input always produces identical markdown
+ *  (no timestamps in the body, sections in fixed order) so snapshot tests
+ *  and downstream diffing work. */
 export function reportToMarkdown(report: AuditReport): string {
   return [
     header(report),

@@ -14,14 +14,10 @@ export interface ReportDiff {
   dimensions: DimensionDiff[];
 }
 
-/**
- * Computes per-dimension deltas between two completed audits, plus an overall
- * delta. Result rows are emitted in the canonical DIMENSIONS order so the UI
- * can render them stably regardless of dimension ordering in the inputs.
- */
+/** Iterates DIMENSIONS (not the input arrays) so the UI gets a stable row order. */
 export function diffReports(a: AuditReport, b: AuditReport): ReportDiff {
-  const byDimA = indexByDimension(a);
-  const byDimB = indexByDimension(b);
+  const byDimA = new Map(a.dimensions.map((d) => [d.dimension, d]));
+  const byDimB = new Map(b.dimensions.map((d) => [d.dimension, d]));
 
   const dimensions: DimensionDiff[] = DIMENSIONS.map((dim) => {
     const da = byDimA.get(dim);
@@ -45,12 +41,6 @@ export function diffReports(a: AuditReport, b: AuditReport): ReportDiff {
     },
     dimensions,
   };
-}
-
-function indexByDimension(report: AuditReport) {
-  const map = new Map<Dimension, AuditReport['dimensions'][number]>();
-  for (const d of report.dimensions) map.set(d.dimension, d);
-  return map;
 }
 
 function round1(n: number): number {

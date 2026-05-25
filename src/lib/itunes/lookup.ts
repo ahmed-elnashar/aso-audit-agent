@@ -26,10 +26,9 @@ export async function lookupApp({
   if (!parsed.success) {
     throw new ItunesApiError(`iTunes lookup response shape unexpected: ${parsed.error.message}`);
   }
-  if (parsed.data.resultCount === 0 || parsed.data.results.length === 0) {
-    throw new AppNotFoundError(appId, country);
-  }
-  return parsed.data.results[0]!;
+  const [first] = parsed.data.results;
+  if (!first) throw new AppNotFoundError(appId, country);
+  return first;
 }
 
 export async function lookupApps({

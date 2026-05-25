@@ -5,17 +5,26 @@ const DEFAULT_NIM_MODEL_ID = 'custom/meta/llama-3.3-70b-instruct' as const;
 const NIM_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 const DEFAULT_OPENAI_MODEL = 'openai/gpt-4o-mini' as const;
 
-type AgentModel =
-  | `${string}/${string}`
-  | { id: `${string}/${string}`; url?: string; apiKey?: string };
+type ProviderModelId = `${string}/${string}`;
+type AgentModel = ProviderModelId | { id: ProviderModelId; url?: string; apiKey?: string };
+
+/**
+ * Mastra's `Agent({ model })` accepts a `provider/model-id` template literal.
+ * `process.env` is `string | undefined` — narrow it through this guard
+ * instead of a blind `as` cast so a misconfigured env var fails predictably.
+ */
+function envAgentModelId(): ProviderModelId | undefined {
+  const v = process.env.ASO_AGENT_MODEL;
+  return v && v.includes('/') ? (v as ProviderModelId) : undefined;
+}
 
 function resolveAgentModel(): AgentModel {
   if (process.env.OPENAI_API_KEY) {
-    return (process.env.ASO_AGENT_MODEL as `${string}/${string}` | undefined) ?? DEFAULT_OPENAI_MODEL;
+    return envAgentModelId() ?? DEFAULT_OPENAI_MODEL;
   }
   if (process.env.NVIDIA_API_KEY) {
     return {
-      id: (process.env.ASO_AGENT_MODEL as `${string}/${string}` | undefined) ?? DEFAULT_NIM_MODEL_ID,
+      id: envAgentModelId() ?? DEFAULT_NIM_MODEL_ID,
       url: NIM_BASE_URL,
       apiKey: process.env.NVIDIA_API_KEY,
     };

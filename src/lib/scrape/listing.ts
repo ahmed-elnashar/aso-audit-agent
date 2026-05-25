@@ -37,19 +37,19 @@ export async function scrapeListing({
 
 export function parseListingHtml(html: string): ScrapedListing {
   const $ = cheerio.load(html);
+  const shoebox = readShoebox($);
 
   const subtitle =
     pickText($, '.product-header__subtitle') ??
-    pickShoeboxSubtitle($) ??
-    null;
+    findString(shoebox, ['subtitle', 'subTitle']);
 
   const previewVideoUrl =
     $('video source[type^="video/"]').first().attr('src') ??
     $('video').first().attr('src') ??
-    pickShoeboxPreviewUrl($) ??
+    pickShoeboxPreviewUrl(shoebox) ??
     null;
 
-  const promotionalText = pickShoeboxPromotionalText($);
+  const promotionalText = findString(shoebox, ['promotionalText', 'promotional_text']);
 
   return { subtitle, promotionalText, previewVideoUrl };
 }
@@ -73,16 +73,10 @@ function readShoebox($: cheerio.CheerioAPI): unknown[] {
   return blocks;
 }
 
-function pickShoeboxSubtitle($: cheerio.CheerioAPI): string | null {
-  return findString(readShoebox($), ['subtitle', 'subTitle']);
-}
-
-function pickShoeboxPromotionalText($: cheerio.CheerioAPI): string | null {
-  return findString(readShoebox($), ['promotionalText', 'promotional_text']);
-}
-
-function pickShoeboxPreviewUrl($: cheerio.CheerioAPI): string | null {
-  const value = findString(readShoebox($), ['previewUrl', 'preview_url']);
+/** Filters the candidate URL down to actual video formats — listings sometimes
+ *  expose image thumbnails under the same `previewUrl` key. */
+function pickShoeboxPreviewUrl(shoebox: unknown[]): string | null {
+  const value = findString(shoebox, ['previewUrl', 'preview_url']);
   return value && /\.(mp4|m3u8|mov)/i.test(value) ? value : null;
 }
 

@@ -43,7 +43,7 @@ export interface FetchReviewsOptions {
 export async function fetchReviews({
   appId,
   country = 'us',
-  pages = 2,
+  pages = 1,
   signal,
 }: FetchReviewsOptions): Promise<Review[]> {
   const all: Review[] = [];

@@ -152,15 +152,10 @@ export function mergeQualitative(
   deterministic: DimensionResult[],
   qualitative: QualitativeOutput
 ): DimensionResult[] {
+  const scores = qualitative.qualitativeScores;
   return deterministic.map((d) => {
-    if (d.dimension === 'icon') {
-      return applyQualitative(d, qualitative.qualitativeScores.icon);
-    }
-    if (d.dimension === 'screenshots') {
-      return applyQualitative(d, qualitative.qualitativeScores.screenshots);
-    }
-    if (d.dimension === 'previewVideo') {
-      return applyQualitative(d, qualitative.qualitativeScores.previewVideo);
+    if (d.dimension in scores) {
+      return applyQualitative(d, scores[d.dimension as keyof typeof scores]);
     }
     return d;
   });
