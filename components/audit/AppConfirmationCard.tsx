@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AuditReportView, type AuditReport } from './AuditReportView';
+import { AuditReportView } from './AuditReportView';
+import type { AuditReport } from '@/audit/types';
 import { useRecentAudits } from '@/hooks/use-recent-audits';
 
 interface Candidate {

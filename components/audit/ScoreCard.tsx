@@ -1,6 +1,6 @@
 'use client';
 
-import type { AuditReport } from './AuditReportView';
+import type { AuditReport } from '@/audit/types';
 
 const DIMENSION_LABELS: Record<string, string> = {
   title: 'Title',

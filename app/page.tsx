@@ -21,7 +21,6 @@ export default function Page() {
   const onNewAudit = () => {
     setMessages([]);
     setInput('');
-    // Best-effort scroll reset; the composer auto-focuses next.
     scrollRef.current?.scrollTo({ top: 0 });
   };
 

@@ -7,8 +7,6 @@ import { CompetitorTable } from './CompetitorTable';
 import { ReportActions } from './ReportActions';
 import type { AuditReport } from '@/audit/types';
 
-export type { AuditReport };
-
 type Tab = 'quick-win' | 'high-impact' | 'strategic';
 const TAB_ORDER: readonly Tab[] = ['quick-win', 'high-impact', 'strategic'] as const;
 
@@ -99,7 +97,7 @@ export function AuditReportView({ report }: { report: AuditReport }) {
         </div>
       </section>
 
-      {report.competitors.length > 0 && <CompetitorTable target={report.app} competitors={report.competitors} />}
+      {report.competitors.length > 0 && <CompetitorTable competitors={report.competitors} />}
 
       <p className="px-1 text-xs text-muted-foreground print:hidden">
         Generated {new Date(report.generatedAt).toLocaleString()} ·

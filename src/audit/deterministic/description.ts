@@ -1,6 +1,5 @@
 import type { AuditInput } from '../inputs';
 import type { Recommendation } from '../types';
-import { firstNChars } from '../text';
 
 const ABOVE_FOLD_CHARS = 170;
 
@@ -37,7 +36,7 @@ export function scoreDescription(input: AuditInput) {
     };
   }
 
-  const aboveFold = firstNChars(description, ABOVE_FOLD_CHARS);
+  const aboveFold = description.slice(0, ABOVE_FOLD_CHARS);
   evidence.push(`Description is ${description.length} chars total; first ${ABOVE_FOLD_CHARS} chars (above the "more" cutoff): "${aboveFold.trim()}".`);
 
   const hasCta = CTA_PATTERNS.some((re) => re.test(description));

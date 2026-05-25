@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ScoreCard } from './ScoreCard';
-import type { AuditReport } from './AuditReportView';
+import type { AuditReport } from '@/audit/types';
 import { diffReports, type DimensionDiff } from '@/audit/compare';
 
 const DIMENSION_LABELS: Record<string, string> = {

@@ -1,10 +1,5 @@
 'use client';
 
-interface TargetAppSummary {
-  name: string;
-  iconUrl: string | null;
-}
-
 interface CompetitorSummary {
   appId: string;
   name: string;
@@ -16,13 +11,7 @@ interface CompetitorSummary {
   iconUrl: string | null;
 }
 
-export function CompetitorTable({
-  target,
-  competitors,
-}: {
-  target: TargetAppSummary;
-  competitors: CompetitorSummary[];
-}) {
+export function CompetitorTable({ competitors }: { competitors: CompetitorSummary[] }) {
   return (
     <section aria-labelledby="competitive-position-heading" className="overflow-hidden rounded-2xl border bg-card">
       <header className="border-b px-4 py-3">

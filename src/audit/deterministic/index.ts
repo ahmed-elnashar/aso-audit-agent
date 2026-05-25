@@ -11,19 +11,6 @@ import { scoreIcon } from './icon';
 import { scoreConversion } from './conversion';
 import { scoreCompetitive } from './competitive';
 
-export {
-  scoreTitle,
-  scoreSubtitle,
-  scoreKeywords,
-  scoreDescription,
-  scoreScreenshots,
-  scorePreviewVideo,
-  scoreRatings,
-  scoreIcon,
-  scoreConversion,
-  scoreCompetitive,
-};
-
 export function runDeterministicChecks(input: AuditInput): DimensionResult[] {
   const raw = [
     scoreTitle(input),

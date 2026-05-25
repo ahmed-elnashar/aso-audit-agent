@@ -37,20 +37,11 @@ export function keywordTokens(text: string | null | undefined): Set<string> {
   return new Set(tokenize(text).filter((t) => t.length > 2 && !STOP_WORDS.has(t)));
 }
 
-export function firstNChars(text: string, n: number): string {
-  if (text.length <= n) return text;
-  return text.slice(0, n);
-}
-
 export function jaccardOverlap(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 && b.size === 0) return 1;
   const intersection = new Set([...a].filter((x) => b.has(x)));
   const union = new Set([...a, ...b]);
   return intersection.size / union.size;
-}
-
-export function clamp(n: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, n));
 }
 
 export function daysSince(iso: string | null | undefined, now = Date.now()): number | null {

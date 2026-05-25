@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clamp, daysSince, firstNChars, jaccardOverlap, keywordTokens, tokenize } from './text';
+import { daysSince, jaccardOverlap, keywordTokens, tokenize } from './text';
 
 describe('tokenize', () => {
   it('lowercases and splits on non-alphanumerics', () => {
@@ -39,16 +39,6 @@ describe('jaccardOverlap', () => {
   });
 });
 
-describe('firstNChars', () => {
-  it('returns the whole string when shorter than n', () => {
-    expect(firstNChars('hi', 10)).toBe('hi');
-  });
-
-  it('truncates to n chars when longer', () => {
-    expect(firstNChars('abcdefghij', 5)).toBe('abcde');
-  });
-});
-
 describe('daysSince', () => {
   it('returns null for null / invalid input', () => {
     expect(daysSince(null)).toBe(null);
@@ -68,10 +58,3 @@ describe('daysSince', () => {
   });
 });
 
-describe('clamp', () => {
-  it('clamps below min, above max, passes through in-range', () => {
-    expect(clamp(-5, 0, 10)).toBe(0);
-    expect(clamp(15, 0, 10)).toBe(10);
-    expect(clamp(5, 0, 10)).toBe(5);
-  });
-});

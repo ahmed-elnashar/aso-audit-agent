@@ -53,7 +53,7 @@ function ToolPart({ part }: { part: ToolPart }) {
   const errored = part.state === 'output-error';
 
   // We only have one agent-callable tool: start-audit. Render its three states.
-  if (toolName.includes('start-audit') || toolName === 'startAuditTool') {
+  if (toolName === 'start-audit') {
     if (errored) {
       return <ToolErrorBubble label="Could not look up that app" detail={part.errorText} />;
     }
@@ -101,10 +101,3 @@ function ToolErrorBubble({ label, detail }: { label: string; detail?: string }) 
   );
 }
 
-function ToolInfoBubble({ label }: { label: string }) {
-  return (
-    <div className="rounded-xl border bg-card px-3 py-2 text-xs text-muted-foreground">
-      {label}
-    </div>
-  );
-}
