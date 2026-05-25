@@ -20,8 +20,9 @@ Agent:  Got it — confirm below.
 
 - **Paste-to-audit chat** — accept any `apps.apple.com/<country>/app/.../id<digits>` URL, country-aware (queries the right storefront).
 - **Human-in-the-loop gate** — the workflow suspends after URL resolution and only runs the heavy audit if the user clicks "Run the audit". Implemented via Mastra's `workflow.suspend()`/`resume()`, exposed as a UI button rather than an agent-callable tool (so the LLM physically can't auto-confirm).
-- **Vision-aware qualitative pass** — when an `OPENAI_API_KEY` resolves a multimodal model (`gpt-4o*`, `gpt-4.1*`, `o-series`, `gpt-5*`), the icon and first 3 screenshots are sent as image inputs alongside the deterministic findings, so the qualitative scores cite specific visual details (e.g. "only iPad screenshots provided, no iPhone slots filled"). Falls back to text-only gracefully on non-vision models.
+- **Vision-aware qualitative pass** — when `OPENAI_API_KEY` resolves a multimodal model (`gpt-4o*`, `gpt-4.1*`, `gpt-4-turbo*`, `chatgpt-4o*`, `o-series`, `gpt-5*`), the icon and first 3 screenshots are sent as image inputs alongside the deterministic findings, so the qualitative scores cite specific visual details (e.g. "only iPad screenshots provided, no iPhone slots filled"). Falls back to text-only gracefully on non-vision models.
 - **Real SSE progress streaming** — the resume endpoint is `text/event-stream`; the chat UI reads the actual workflow stage events (`fetching-listing-data` → `fetching-competitors` → `deterministic` → `qualitative-start` → `qualitative-done` → `aggregating`) instead of cycling fake `setTimeout` labels.
+- **Visual context in the report** — score card surfaces the app's average rating + rating count next to its category; a horizontal screenshot strip sits under the card so the analyst can see what they're reading about. **iPad screenshots are used as a fallback** when the listing has none for iPhone (Notion-style listings), labelled so it's never mistaken for an iPhone capture.
 - **Side-by-side comparison** — every completed audit is cached in `localStorage` (FIFO, capped at 5). The "Compare with…" picker opens `/compare?a=X&b=Y` with two score cards and a per-dimension delta table.
 - **Export to Markdown or PDF** — Markdown is a pure, deterministic serializer (`reportToMarkdown`). PDF uses `window.print()` with a print stylesheet that isolates the audit subtree, forces light-theme tokens, and hides the chat chrome.
 - **Offline quality bar** — `npm run eval:audit` runs `@mastra/evals` scorers (faithfulness, answer-relevancy, keyword-coverage) over a fixture suite. Not wired to CI; documented as a local pre-release gate.
@@ -160,16 +161,16 @@ Four layers, top to bottom. Each layer talks only to the one directly below it �
 
 | Dimension          | Weight | What's deterministic                                | What the LLM judges                   |
 | ------------------ | -----: | --------------------------------------------------- | ------------------------------------- |
-| Title (30 ch)      | 20%    | utilization, brand-only, stuffing                   | brand/keyword balance, naturalness    |
-| Subtitle (30 ch)   | 15%    | utilization, dedup vs title                         | benefit framing                       |
-| Keyword field      | 15%    | inferred from title+subtitle tokens vs description  | (deterministic only)                  |
+| Title (30 ch)      | 18%    | utilization, brand-only, stuffing                   | brand/keyword balance, naturalness    |
+| Subtitle (30 ch)   | 14%    | utilization, dedup vs title                         | benefit framing                       |
+| Keyword field      | 14%    | inferred from title+subtitle tokens vs description  | (deterministic only)                  |
 | Description        | 10%    | length, first-170-chars hook, CTA + social proof    | hook quality, benefit framing         |
-| Screenshots        | 15%    | slot count, iPad presence, preview video presence   | visual cohesion, value-prop on first 2 (vision) |
-| Preview video      | 5%     | existence                                           | hook strength (when vision available) |
-| Ratings & reviews  | 15%    | avg rating, count, release recency                  | review themes (when RSS available)    |
-| Icon               | 5%     | URL presence                                        | distinctiveness, legibility (vision)  |
-| Conversion signals | 5%     | promo text, What's New length, recency              | informativeness                       |
-| Competitive        | 5%     | keyword overlap with top 3, rating gap              | qualitative positioning               |
+| Screenshots        | 14%    | slot count, iPad presence, preview video presence   | visual cohesion, value-prop on first 2 (vision) |
+| Preview video      |  4%    | existence                                           | hook strength (when vision available) |
+| Ratings & reviews  | 14%    | avg rating, count, release recency                  | review themes (when RSS available)    |
+| Icon               |  4%    | URL presence                                        | distinctiveness, legibility (vision)  |
+| Conversion signals |  4%    | promo text, What's New length, recency              | informativeness                       |
+| Competitive        |  4%    | keyword overlap with top 3, rating gap              | qualitative positioning               |
 
 Every recommendation cites specific evidence ("Title is 'Spotify' — 7/30 chars, 0 keywords") and includes a before/after for text rewrites where applicable.
 
@@ -265,9 +266,10 @@ Required env vars in the Vercel project:
 | `OPENAI_API_KEY`       | yes (or NIM key)   | vision-capable by default (`gpt-4o-mini`) |
 | `TURSO_DATABASE_URL`   | yes                | create at https://turso.tech (generous free tier) |
 | `TURSO_AUTH_TOKEN`     | yes                | from the same Turso dashboard |
-| `ASO_AUDIT_MODEL`      | no                 | override the qualitative-pass model |
+| `ASO_AUDIT_MODEL`      | no                 | override the model used by the **qualitative audit pass** (`src/lib/llm.ts`) |
+| `ASO_AGENT_MODEL`      | no                 | override the model used by the **chat agent** (`src/mastra/agents/aso-audit-agent.ts`); accepts a `provider/model-id` string e.g. `openai/gpt-4o-mini` |
 
-DuckDB observability is auto-disabled when `process.env.VERCEL` is set (it has native bindings that don't bundle on serverless) or when `DISABLE_OBSERVABILITY_STORE=1`.
+DuckDB observability is **dynamically imported** only off-Vercel. The static `import { DuckDBStore }` was removed because Vercel resolves external modules at runtime and `libduckdb.so` is not on the Vercel image — a static import would 500 every server route at module-init time even on code paths that never instantiate DuckDB. Now `await import('@mastra/duckdb')` runs only when `process.env.VERCEL` is unset (or `DISABLE_OBSERVABILITY_STORE=1`), so DuckDB stays entirely out of the production runtime graph. Local dev still gets traces in Mastra Studio.
 
 ## Quality bar
 
