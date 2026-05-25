@@ -64,15 +64,20 @@ export async function fetchReviews({
     const entries = Array.isArray(raw) ? raw : [raw];
     const reviews = entries
       .filter((e) => e.content && e['im:rating'])
-      .map((e) => ({
-        id: e.id?.label ?? '',
-        author: e.author?.name?.label ?? 'Anonymous',
-        rating: Number(e['im:rating']!.label),
-        title: e.title?.label ?? '',
-        body: e.content!.label,
-        updatedAt: e.updated?.label ?? '',
-        version: e['im:version']?.label ?? null,
-      }));
+      .map((e) => {
+        const rating = Number(e['im:rating']!.label);
+        if (!Number.isFinite(rating)) return null;
+        return {
+          id: e.id?.label ?? '',
+          author: e.author?.name?.label ?? 'Anonymous',
+          rating,
+          title: e.title?.label ?? '',
+          body: e.content!.label,
+          updatedAt: e.updated?.label ?? '',
+          version: e['im:version']?.label ?? null,
+        };
+      })
+      .filter((r): r is Review => r !== null);
     if (reviews.length === 0) break;
     all.push(...reviews);
   }

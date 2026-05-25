@@ -63,7 +63,7 @@ function CompetitorCell({ competitor: c }: { competitor: CompetitorSummary }) {
 }
 
 function formatCount(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 999_500) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return (n / 1_000).toFixed(0) + 'k';
   return String(n);
 }

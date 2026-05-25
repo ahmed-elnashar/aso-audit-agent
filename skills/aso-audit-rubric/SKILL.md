@@ -23,16 +23,16 @@ it is excluded from both numerator and denominator rather than treated as zero.
 
 | Dimension              | Weight | Key checks |
 | ---------------------- | -----: | --- |
-| Title (30 char)        |   20%  | Primary keyword present? Char utilization? Brand vs. keyword balance? Natural reading, not stuffed? |
-| Subtitle (30 char)     |   15%  | Distinct secondary keywords (not repeating title)? Benefit-driven? Full character utilization? |
-| Keyword field (100 ch) |   15%  | Inferred from visible surface (title + subtitle). Singular forms (Apple indexes both)? No duplicates with title/subtitle? Full 100 chars used? |
+| Title (30 char)        |   18%  | Primary keyword present? Char utilization? Brand vs. keyword balance? Natural reading, not stuffed? |
+| Subtitle (30 char)     |   14%  | Distinct secondary keywords (not repeating title)? Benefit-driven? Full character utilization? |
+| Keyword field (100 ch) |   14%  | Inferred from visible surface (title + subtitle). Singular forms (Apple indexes both)? No duplicates with title/subtitle? Full 100 chars used? |
 | Description            |   10%  | First 170 chars hook above the "more" cutoff? Features benefit-framed? Social proof? Clear CTA? Natural keyword integration? |
-| Screenshots            |   15%  | All 10 slots used? First 2–3 communicate value? Readable on-image text (Apple OCR-indexes it)? Cohesive design language? |
-| App preview video      |    5%  | Exists? Hook in first 3 seconds? 15–30 seconds? Works without sound? |
-| Ratings & reviews      |   15%  | Average rating? Recent trend? Themes in praise and complaints? Developer responds to negatives? |
-| Icon                   |    5%  | Distinctive in search results? Clear at small sizes? Category-appropriate? Avoids unreadable text? |
-| Conversion signals     |    5%  | Promotional text used? "What's New" informative? Recent update cadence? |
-| Competitive position   |    5%  | Keyword coverage vs. top 3 competitors in the same category? Visual style? Rating gap? |
+| Screenshots            |   14%  | All 10 slots used? First 2–3 communicate value? Readable on-image text (Apple OCR-indexes it)? Cohesive design language? |
+| App preview video      |    4%  | Exists? Hook in first 3 seconds? 15–30 seconds? Works without sound? |
+| Ratings & reviews      |   14%  | Average rating? Recent trend? Themes in praise and complaints? Developer responds to negatives? |
+| Icon                   |    4%  | Distinctive in search results? Clear at small sizes? Category-appropriate? Avoids unreadable text? |
+| Conversion signals     |    4%  | Promotional text used? "What's New" informative? Recent update cadence? |
+| Competitive position   |    4%  | Keyword coverage vs. top 3 competitors in the same category? Visual style? Rating gap? |
 
 ## Output
 

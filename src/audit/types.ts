@@ -16,16 +16,16 @@ export const DIMENSIONS = [
 export type Dimension = (typeof DIMENSIONS)[number];
 
 export const DIMENSION_WEIGHTS: Record<Dimension, number> = {
-  title: 20,
-  subtitle: 15,
-  keywords: 15,
+  title: 18,
+  subtitle: 14,
+  keywords: 14,
   description: 10,
-  screenshots: 15,
-  previewVideo: 5,
-  ratings: 15,
-  icon: 5,
-  conversion: 5,
-  competitive: 5,
+  screenshots: 14,
+  previewVideo: 4,
+  ratings: 14,
+  icon: 4,
+  conversion: 4,
+  competitive: 4,
 };
 
 export const RECOMMENDATION_CATEGORIES = ['quick-win', 'high-impact', 'strategic'] as const;

@@ -45,8 +45,10 @@ export async function POST(req: Request) {
         if (result.status !== 'success') {
           push({ type: 'error', message: `workflow status ${result.status}` });
         } else {
-          const out = result.result as { status: 'completed' | 'cancelled'; report: unknown };
-          if (out.status === 'cancelled') {
+          const out = result.result as { status?: unknown; report?: unknown };
+          if (!out || typeof out !== 'object' || (out.status !== 'completed' && out.status !== 'cancelled')) {
+            push({ type: 'error', message: 'unexpected workflow result shape' });
+          } else if (out.status === 'cancelled') {
             push({ type: 'cancelled' });
           } else {
             push({ type: 'completed', report: out.report });

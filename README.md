@@ -50,62 +50,64 @@ npm run mastra:dev         # Mastra Studio at localhost:4111 for trace inspectio
 
 ## Architecture
 
+Four layers, top to bottom. Each layer talks only to the one directly below it — the chat doesn't know about iTunes, the audit engine doesn't know about HTTP, the data layer doesn't know about Mastra. That separation is what makes any one piece replaceable without touching the rest.
+
 ```
-┌─ Next.js app (app/) ────────────────────────────────────────┐
-│                                                              │
-│  page.tsx            chat UI (useChat from @ai-sdk/react)    │
-│  api/chat            streams the Mastra agent (v6 chunks)    │
-│  api/audit/resume    SSE — resumes the workflow + streams    │
-│                      real stage events to the client         │
-│  compare/page.tsx    side-by-side comparison view            │
-│                                                              │
-└─────────────────────────┬────────────────────────────────────┘
-                          │
-┌─ Mastra (src/mastra/) ──▼────────────────────────────────────┐
-│                                                              │
-│  Agent: asoAuditAgent                                        │
-│    └─ tool: start-audit                                      │
-│        creates a workflow run, lets it suspend, returns      │
-│        runId + candidate app for UI confirmation             │
-│                                                              │
-│  Workflow: asoAuditWorkflow                                  │
-│    1. identify-candidate     parse URL → iTunes lookup       │
-│    2. confirm-and-audit      suspend; on resume run the      │
-│                              audit + emit progress events    │
-│                                                              │
-│  Skill: skills/aso-audit-rubric/SKILL.md                     │
-│    The ASO rubric (dimensions, weights, style guarantees).   │
-│    Loaded into the qualitative LLM call at runtime —         │
-│    single source of truth, no string duplication.            │
-│                                                              │
-│  Storage: LibSQL (file: ./mastra.db; Turso URL on Vercel)    │
-│  Observability: DuckDB (dev only) / disabled on Vercel       │
-│                                                              │
-└─────────────────────────┬────────────────────────────────────┘
-                          │
-┌─ Audit engine (src/audit/) ─▼────────────────────────────────┐
-│                                                              │
-│  runAudit(input)                                             │
-│    deterministic/    10 pure functions, one per dimension    │
-│    qualitative.ts    ONE generateObject call with images +   │
-│                      Zod-validated structured output         │
-│    score.ts          weighted aggregator → 0-100             │
-│                      (unavailable dims excluded from denom)  │
-│                                                              │
-└─────────────────────────┬────────────────────────────────────┘
-                          │
-┌─ Data layer (src/lib/) ──▼───────────────────────────────────┐
-│                                                              │
-│  itunes/lookup       iTunes Lookup API (app + competitors)   │
-│  itunes/reviews      Reviews RSS (graceful empty)            │
-│  itunes/top-charts   Top Charts RSS (genreId)                │
-│  scrape/listing      cheerio scrape of the App Store HTML    │
-│                      page for subtitle + promotional + video │
-│  parse-app-url       URL parser (country, app id, slug)      │
-│  llm                 NIM/OpenAI provider resolver +          │
-│                      vision-capability detection             │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+┌─ Layer 1 · Chat UI                        (app/, components/) ┐
+│                                                                │
+│  page.tsx            chat UI (useChat from @ai-sdk/react)      │
+│  api/chat            streams the Mastra agent (v6 chunks)      │
+│  api/audit/resume    SSE — resumes the workflow + streams      │
+│                      real stage events to the client           │
+│  compare/page.tsx    side-by-side comparison view              │
+│                                                                │
+└──────────────────────────┬─────────────────────────────────────┘
+                           │
+┌─ Layer 2 · Mastra primitives                 (src/mastra/) ────┐
+│                                                                │
+│  Agent: asoAuditAgent                                          │
+│    └─ tool: start-audit                                        │
+│        creates a workflow run, lets it suspend, returns        │
+│        runId + candidate app for UI confirmation               │
+│                                                                │
+│  Workflow: asoAuditWorkflow                                    │
+│    1. identify-candidate     parse URL → iTunes lookup         │
+│    2. confirm-and-audit      suspend; on resume run the        │
+│                              audit + emit progress events      │
+│                                                                │
+│  Skill: skills/aso-audit-rubric/SKILL.md                       │
+│    The ASO rubric (dimensions, weights, style guarantees).     │
+│    Loaded into the qualitative LLM call at runtime —           │
+│    single source of truth, no string duplication.              │
+│                                                                │
+│  Storage: LibSQL (file: ./mastra.db; Turso URL on Vercel)      │
+│  Observability: DuckDB (dev only) / disabled on Vercel         │
+│                                                                │
+└──────────────────────────┬─────────────────────────────────────┘
+                           │
+┌─ Layer 3 · Audit engine                       (src/audit/) ────┐
+│                                                                │
+│  runAudit(input)                                               │
+│    deterministic/    10 pure functions, one per dimension      │
+│    qualitative.ts    ONE generateObject call with images +     │
+│                      Zod-validated structured output           │
+│    score.ts          weighted aggregator → 0-100               │
+│                      (unavailable dims excluded from denom)    │
+│                                                                │
+└──────────────────────────┬─────────────────────────────────────┘
+                           │
+┌─ Layer 4 · Data                                 (src/lib/) ────┐
+│                                                                │
+│  itunes/lookup       iTunes Lookup API (app + competitors)     │
+│  itunes/reviews      Reviews RSS (graceful empty)              │
+│  itunes/top-charts   Top Charts RSS (genreId)                  │
+│  scrape/listing      cheerio scrape of the App Store HTML      │
+│                      page for subtitle + promotional + video   │
+│  parse-app-url       URL parser (country, app id, slug)        │
+│  llm                 NIM/OpenAI provider resolver +            │
+│                      vision-capability detection               │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ## Audit flow

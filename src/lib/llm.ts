@@ -46,6 +46,7 @@ export function openaiModelSupportsVision(modelId: string): boolean {
   return (
     id.startsWith('gpt-4o') ||
     id.startsWith('gpt-4.1') ||
+    id.startsWith('gpt-4-turbo') ||
     id.startsWith('gpt-5') ||
     id.startsWith('o1') ||
     id.startsWith('o3') ||
