@@ -4,19 +4,7 @@ import type {
   DimensionResult,
   Recommendation,
 } from './types';
-
-const DIMENSION_LABELS: Record<string, string> = {
-  title: 'Title',
-  subtitle: 'Subtitle',
-  keywords: 'Keyword field',
-  description: 'Description',
-  screenshots: 'Screenshots',
-  previewVideo: 'Preview video',
-  ratings: 'Ratings & reviews',
-  icon: 'Icon',
-  conversion: 'Conversion signals',
-  competitive: 'Competitive position',
-};
+import { DIMENSION_LABELS } from './dimension-labels';
 
 const CATEGORY_LABELS: Record<Recommendation['category'], string> = {
   'quick-win': 'Quick Wins',
@@ -59,7 +47,7 @@ function header(report: AuditReport): string {
 function summaryTable(dimensions: DimensionResult[]): string {
   const rows = dimensions
     .map((d) => {
-      const label = DIMENSION_LABELS[d.dimension] ?? d.dimension;
+      const label = DIMENSION_LABELS[d.dimension];
       const score = d.score === null ? 'Not detected' : `${d.score.toFixed(1)} / 10`;
       const status = d.status === 'unavailable' ? ` _(${d.unavailableReason ?? 'unavailable'})_` : '';
       return `| ${label} | ${d.weight}% | ${score}${status} |`;
@@ -76,7 +64,7 @@ function recommendationsSection(category: Recommendation['category'], recs: Reco
 }
 
 function renderRecommendation(r: Recommendation, idx: number): string {
-  const label = DIMENSION_LABELS[r.dimension] ?? r.dimension;
+  const label = DIMENSION_LABELS[r.dimension];
   const parts = [`### ${idx + 1}. ${label}`, `**Why:** ${r.reasoning}`, `**Evidence:** ${r.evidence}`];
   if (r.before !== null && r.after !== null) {
     parts.push('**Before:**', '```', r.before, '```', '**After:**', '```', r.after, '```');

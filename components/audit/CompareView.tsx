@@ -4,19 +4,7 @@ import Link from 'next/link';
 import { ScoreCard } from './ScoreCard';
 import type { AuditReport } from '@/audit/types';
 import { diffReports, type DimensionDiff } from '@/audit/compare';
-
-const DIMENSION_LABELS: Record<string, string> = {
-  title: 'Title',
-  subtitle: 'Subtitle',
-  keywords: 'Keyword field',
-  description: 'Description',
-  screenshots: 'Screenshots',
-  previewVideo: 'Preview video',
-  ratings: 'Ratings & reviews',
-  icon: 'Icon',
-  conversion: 'Conversion signals',
-  competitive: 'Competitive position',
-};
+import { DIMENSION_LABELS } from '@/audit/dimension-labels';
 
 export function CompareView({ a, b }: { a: AuditReport; b: AuditReport }) {
   const diff = diffReports(a, b);
@@ -63,7 +51,7 @@ export function CompareView({ a, b }: { a: AuditReport; b: AuditReport }) {
 }
 
 function DeltaRow({ row }: { row: DimensionDiff }) {
-  const label = DIMENSION_LABELS[row.dimension] ?? row.dimension;
+  const label = DIMENSION_LABELS[row.dimension];
   return (
     <tr>
       <td className="px-5 py-2 text-xs">

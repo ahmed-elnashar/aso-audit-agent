@@ -1,19 +1,7 @@
 'use client';
 
-import type { AuditReport } from '@/audit/types';
-
-const DIMENSION_LABELS: Record<string, string> = {
-  title: 'Title',
-  subtitle: 'Subtitle',
-  keywords: 'Keyword field',
-  description: 'Description',
-  screenshots: 'Screenshots',
-  previewVideo: 'Preview video',
-  ratings: 'Ratings & reviews',
-  icon: 'Icon',
-  conversion: 'Conversion signals',
-  competitive: 'Competitive position',
-};
+import type { AuditReport, Dimension } from '@/audit/types';
+import { DIMENSION_LABELS } from '@/audit/dimension-labels';
 
 export function ScoreCard({ report }: { report: AuditReport }) {
   // Scope the heading id by appId so multiple ScoreCards on one page
@@ -75,8 +63,8 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-function DimensionRow({ dimension, score, weight }: { dimension: string; score: number | null; weight: number }) {
-  const label = DIMENSION_LABELS[dimension] ?? dimension;
+function DimensionRow({ dimension, score, weight }: { dimension: Dimension; score: number | null; weight: number }) {
+  const label = DIMENSION_LABELS[dimension];
   if (score === null) {
     return (
       <li

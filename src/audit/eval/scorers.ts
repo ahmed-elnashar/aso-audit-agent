@@ -6,19 +6,7 @@ import {
 import { getAuditModel } from '../../lib/llm';
 import type { AuditInput } from '../inputs';
 import type { DimensionResult, Recommendation } from '../types';
-
-const DIMENSION_LABELS: Record<string, string> = {
-  title: 'Title',
-  subtitle: 'Subtitle',
-  keywords: 'Keyword field',
-  description: 'Description',
-  screenshots: 'Screenshots',
-  previewVideo: 'Preview video',
-  ratings: 'Ratings & reviews',
-  icon: 'Icon',
-  conversion: 'Conversion signals',
-  competitive: 'Competitive position',
-};
+import { DIMENSION_LABELS } from '../dimension-labels';
 
 export interface RecommendationScores {
   faithfulness: number;
@@ -40,7 +28,7 @@ export async function scoreRecommendation(
   input: AuditInput
 ): Promise<RecommendationScores> {
   const context = buildContext(dimension, input);
-  const question = `What should change for the ${DIMENSION_LABELS[rec.dimension] ?? rec.dimension} of this App Store listing, and why?`;
+  const question = `What should change for the ${DIMENSION_LABELS[rec.dimension]} of this App Store listing, and why?`;
   const answer = formatRecommendation(rec);
   const { model } = getAuditModel();
 

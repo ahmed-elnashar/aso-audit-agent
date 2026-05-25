@@ -1,26 +1,7 @@
 'use client';
 
-interface Recommendation {
-  dimension: string;
-  category: 'quick-win' | 'high-impact' | 'strategic';
-  evidence: string;
-  before: string | null;
-  after: string | null;
-  reasoning: string;
-}
-
-const DIMENSION_LABELS: Record<string, string> = {
-  title: 'Title',
-  subtitle: 'Subtitle',
-  keywords: 'Keywords',
-  description: 'Description',
-  screenshots: 'Screenshots',
-  previewVideo: 'Preview video',
-  ratings: 'Ratings',
-  icon: 'Icon',
-  conversion: 'Conversion',
-  competitive: 'Competitive',
-};
+import { DIMENSION_SHORT_LABELS } from '@/audit/dimension-labels';
+import type { Recommendation } from '@/audit/types';
 
 export function RecommendationList({ recommendations }: { recommendations: Recommendation[] }) {
   return (
@@ -37,7 +18,7 @@ function RecommendationRow({ recommendation: r }: { recommendation: Recommendati
     <article className="px-4 py-4">
       <header className="flex items-start gap-2">
         <span className="rounded-full border bg-muted/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-          {DIMENSION_LABELS[r.dimension] ?? r.dimension}
+          {DIMENSION_SHORT_LABELS[r.dimension]}
         </span>
       </header>
       <p className="mt-2 text-xs text-muted-foreground">{r.evidence}</p>
