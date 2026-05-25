@@ -61,6 +61,10 @@ export interface AppSummary {
   appStoreUrl: string;
   version: string | null;
   currentVersionReleaseDate: string | null;
+  screenshotUrls: string[];
+  ipadScreenshotUrls: string[];
+  averageRating: number | null;
+  ratingCount: number | null;
 }
 
 export interface CompetitorSummary {

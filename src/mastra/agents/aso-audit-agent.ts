@@ -53,5 +53,8 @@ Style:
 - No emojis, no salesman tone, no "I'd be happy to help".
 - The data is the message; your chat text is the wrapper, and short is correct.`,
   model: resolveAgentModel(),
-  tools: { startAuditTool },
+  // Key becomes the toolName the AI SDK surfaces to the model and in stream
+  // chunks (`tool-<key>`). The chat UI keys its tool-part renderer off this
+  // name, so it must match the tool's declared id.
+  tools: { 'start-audit': startAuditTool },
 });

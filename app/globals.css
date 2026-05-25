@@ -190,13 +190,19 @@ button:disabled {
     white-space: normal !important;
   }
 
-  /* Page-break safety. */
-  [data-print-root] section,
-  [data-print-root] article,
-  [data-print-root] li,
-  [data-print-root] table {
+  /* Page-break safety. Only the atomic unit (one recommendation = <article>)
+     refuses to split. Large wrappers (sections, tables) must be allowed to
+     split, otherwise the browser pushes the whole block to a fresh page and
+     leaves the prior page bottom blank. */
+  [data-print-root] article {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+  [data-print-root] section,
+  [data-print-root] li,
+  [data-print-root] table {
+    break-inside: auto;
+    page-break-inside: auto;
   }
   [data-print-root] h1,
   [data-print-root] h2,

@@ -68,6 +68,10 @@ function assemble(input: AuditInput, dimensions: DimensionResult[]): AuditReport
     appStoreUrl: input.app.appStoreUrl,
     version: input.app.version,
     currentVersionReleaseDate: input.app.currentVersionReleaseDate,
+    screenshotUrls: input.app.screenshotUrls,
+    ipadScreenshotUrls: input.app.ipadScreenshotUrls,
+    averageRating: input.app.averageRating,
+    ratingCount: input.app.ratingCount,
   };
   const competitors: CompetitorSummary[] = input.competitors.map((c) => ({
     appId: c.appId,

@@ -31,14 +31,24 @@ export function reportToMarkdown(report: AuditReport): string {
 
 function header(report: AuditReport): string {
   const a = report.app;
-  return [
+  const ratingLine = a.averageRating !== null || a.ratingCount !== null
+    ? `**Rating:** ${a.averageRating?.toFixed(2) ?? 'N/A'} ★ (${a.ratingCount?.toLocaleString() ?? '—'} ratings)  `
+    : null;
+  const lines = [
     `# ASO Audit — ${a.name}`,
     `**Overall score:** ${report.overallScore} / 100`,
     `**Developer:** ${a.developer}  `,
     `**Category:** ${a.category}  `,
     `**Storefront:** ${a.country.toUpperCase()}  `,
+    ratingLine,
     `**App Store:** <${a.appStoreUrl}>`,
-  ].join('\n');
+  ].filter((l): l is string => l !== null);
+  const stripUrls = a.screenshotUrls.length > 0 ? a.screenshotUrls : a.ipadScreenshotUrls;
+  const heading = a.screenshotUrls.length > 0 ? '## Screenshots' : '## Screenshots (iPad — no iPhone screenshots in this listing)';
+  if (stripUrls.length > 0) {
+    lines.push('', heading, '', stripUrls.map((u, i) => `![Screenshot ${i + 1}](${u})`).join(' '));
+  }
+  return lines.join('\n');
 }
 
 function summaryTable(dimensions: DimensionResult[]): string {

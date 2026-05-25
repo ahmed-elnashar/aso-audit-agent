@@ -26,6 +26,17 @@ export function ScoreCard({ report }: { report: AuditReport }) {
           <div className="truncate text-xs text-muted-foreground">
             {report.app.developer} · {report.app.category} · {report.app.country.toUpperCase()}
           </div>
+          {(report.app.averageRating !== null || report.app.ratingCount !== null) && (
+            <div className="mt-1 flex items-center gap-2 text-[11px]">
+              <span className="font-semibold tabular-nums">
+                {report.app.averageRating?.toFixed(2) ?? 'N/A'}
+                <span className="text-muted-foreground"> ★</span>
+              </span>
+              <span className="text-muted-foreground">
+                {report.app.ratingCount !== null ? `${formatRatingCount(report.app.ratingCount)} ratings` : 'no rating count'}
+              </span>
+            </div>
+          )}
         </div>
         <ScoreRing score={report.overallScore} />
       </div>
@@ -94,6 +105,12 @@ function DimensionRow({ dimension, score, weight }: { dimension: Dimension; scor
       <span aria-hidden="true" className="hidden w-10 text-right text-[10px] text-muted-foreground sm:inline">{weight}%</span>
     </li>
   );
+}
+
+function formatRatingCount(n: number): string {
+  if (n >= 999_500) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'k';
+  return String(n);
 }
 
 export function scoreTone(scoreOutOf100: number): string {

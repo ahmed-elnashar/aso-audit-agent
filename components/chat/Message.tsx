@@ -15,11 +15,28 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {!isUser && <RoleLabel role="agent" />}
         {isUser && <RoleLabel role="you" />}
         <div className={isUser ? 'rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm text-accent-foreground' : 'space-y-3 text-sm'}>
-          {message.parts.map((part, i) => renderPart(part, i))}
+          {orderForDisplay(message.parts).map((part, i) => renderPart(part, i))}
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * The AI SDK streams tool parts first (step 1: tool call+result) and the
+ * model's text in step 2 — but in the chat UI we want the agent's text
+ * acknowledgement ("Got it — confirm below.") to appear *above* the
+ * confirmation card it refers to. Stable-partition: text parts first, then
+ * everything else, preserving relative order within each group.
+ */
+function orderForDisplay(parts: UIMessage['parts']): UIMessage['parts'] {
+  const texts: UIMessage['parts'] = [];
+  const rest: UIMessage['parts'] = [];
+  for (const p of parts) {
+    if (p.type === 'text') texts.push(p);
+    else rest.push(p);
+  }
+  return [...texts, ...rest];
 }
 
 function renderPart(part: UIMessage['parts'][number], i: number) {

@@ -42,6 +42,8 @@ export function AuditReportView({ report }: { report: AuditReport }) {
 
       <ScoreCard report={report} />
 
+      <ScreenshotStrip iphone={report.app.screenshotUrls} ipad={report.app.ipadScreenshotUrls} />
+
       <section aria-labelledby="recommendations-heading" className="overflow-hidden rounded-2xl border bg-card">
         <h2 id="recommendations-heading" className="sr-only">
           Recommendations
@@ -86,7 +88,7 @@ export function AuditReportView({ report }: { report: AuditReport }) {
             const list = buckets[t];
             if (list.length === 0) return null;
             return (
-              <div key={t} className="break-inside-avoid">
+              <div key={t}>
                 <h3 className="border-b px-4 py-2 text-[10pt] font-semibold uppercase tracking-wider text-muted-foreground">
                   {TAB_LABELS[t]} <span className="ml-1 text-muted-foreground/70">({list.length})</span>
                 </h3>
@@ -111,5 +113,40 @@ export function AuditReportView({ report }: { report: AuditReport }) {
         </a>
       </p>
     </div>
+  );
+}
+
+function ScreenshotStrip({ iphone, ipad }: { iphone: string[]; ipad: string[] }) {
+  // Prefer iPhone (the install majority for most categories). Fall back to
+  // iPad only when iPhone has none — apps like Notion ship only iPad shots,
+  // and a visual reference is more useful than a blank section.
+  const usingIphone = iphone.length > 0;
+  const urls = usingIphone ? iphone : ipad;
+  if (urls.length === 0) return null;
+  return (
+    <section aria-labelledby="screenshots-heading" className="overflow-hidden rounded-2xl border bg-card">
+      <header className="flex items-baseline gap-2 border-b px-4 py-3">
+        <h2 id="screenshots-heading" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Screenshots <span className="ml-1 font-normal normal-case text-muted-foreground/70">({urls.length})</span>
+        </h2>
+        {!usingIphone && (
+          <span className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+            iPad — no iPhone screenshots in this listing
+          </span>
+        )}
+      </header>
+      {/* Horizontal scroll on screen; wraps onto a grid for print so all frames are visible on the PDF. */}
+      <div className="flex gap-2 overflow-x-auto p-3 print:flex-wrap print:overflow-visible">
+        {urls.map((url, i) => (
+          <img
+            key={url}
+            src={url}
+            alt={`Screenshot ${i + 1}`}
+            loading="lazy"
+            className="h-44 w-auto shrink-0 rounded-md border object-contain print:h-32"
+          />
+        ))}
+      </div>
+    </section>
   );
 }
